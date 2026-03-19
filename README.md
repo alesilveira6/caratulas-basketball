@@ -10,12 +10,12 @@ App web para generar carátulas de jugadores automáticamente desde un Excel, us
 
 1. Entrá a [github.com](https://github.com) con tu cuenta
 2. Hacé clic en el botón verde **"New"** (nuevo repositorio)
-3. Nombre: `caratulas-basketball`
-4. Dejá todo por defecto y hacé clic en **"Create repository"**
+3. Nombre: `caratulas-basketball` 
+4. Dejá todo por defecto y hacé clic  en **"Create repository"**
 5. En la página siguiente, hacé clic en **"uploading an existing file"**
 6. Arrastrá TODOS los archivos de esta carpeta (manteniendo la estructura de carpetas)
-7. Hacé clic en **"Commit changes"**
-
+7. Hacé clic en **"Commit changes"** 
+  
 ### Paso 2 — Conectar con Vercel
 
 1. Entrá a [vercel.com](https://vercel.com) con tu cuenta
