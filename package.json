@@ -1,0 +1,15 @@
+{
+  "name": "caratulas-basketball",
+  "version": "1.0.0",
+  "description": "Generador automático de carátulas de básquet desde Excel",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vercel dev",
+    "deploy": "vercel --prod"
+  },
+  "dependencies": {
+    "xlsx": "^0.18.5",
+    "node-fetch": "^3.3.2",
+    "form-data": "^4.0.0"
+  }
+}
