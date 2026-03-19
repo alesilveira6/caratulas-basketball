@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Generador de Carátulas 🏀</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:ital,wght@0,400;0,600;0,700;1,400&family=Barlow+Condensed:wght@600;700;900&display=swap');
+
+  :root {
+    --bg: #08091a;
+    --surface: #0f1124;
+    --surface2: #161830;
+    --accent: #00d4ff;
+    --accent2: #ff6b00;
+    --success: #00e676;
+    --error: #ff4757;
+    --text: #edf0f8;
+    --muted: #5a6080;
+    --border: rgba(0,212,255,0.12);
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Barlow', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Animated background */
+  body::before {
+    content: '';
+    position: fixed; inset: 0; z-index: 0;
+    background:
+      radial-gradient(ellipse 80% 50% at 20% 20%, rgba(0,212,255,0.04) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 40% at 80% 80%, rgba(255,107,0,0.04) 0%, transparent 60%),
+      linear-gradient(rgba(0,212,255,0.015) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,255,0.015) 1px, transparent 1px);
+    background-size: 100% 100%, 100% 100%, 32px 32px, 32px 32px;
+    pointer-events: none;
+  }
+
+  .app { position: relative; z-index: 1; max-width: 1200px; margin: 0 auto; padding: 0 24px 60px; }
+
+  /* ── HEADER ── */
+  header {
+    padding: 48px 0 40px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+    flex-wrap: wrap;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 40px;
+  }
+
+  .logo-area h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(40px, 6vw, 72px);
+    letter-spacing: 3px;
+    line-height: 0.9;
+    background: linear-gradient(135deg, #fff 20%, var(--accent) 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .logo-area p {
+    color: var(--muted);
+    font-size: 15px;
+    margin-top: 8px;
+    letter-spacing: 0.5px;
+  }
+
+  .header-badge {
+    background: rgba(0,212,255,0.08);
+    border: 1px solid rgba(0,212,255,0.2);
+    color: var(--accent);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px;
+    letter-spacing: 2px;
+    padding: 6px 14px;
+    border-radius: 2px;
+    text-transform: uppercase;
+  }
+
+  /* ── CONFIG ── */
+  .config-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+
+  @media(max-width: 600px) { .config-grid { grid-template-columns: 1fr; } }
+
+  .config-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+  }
+
+  .config-card label {
+    display: block;
+    font-size: 11px;
+    font-family: 'Barlow Condensed', sans-serif;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  .config-card .hint {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 6px;
+  }
+
+  .config-card .hint a { color: var(--accent); }
+
+  .input {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'Barlow', sans-serif;
+    font-size: 14px;
+    padding: 10px 14px;
+    border-radius: 6px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .input:focus { border-color: var(--accent); }
+  .input::placeholder { color: var(--muted); }
+
+  .saved-badge {
+    display: inline-block;
+    font-size: 10px;
+    color: var(--success);
+    margin-top: 5px;
+  }
+
+  /* ── TEAMS ── */
+  .teams-section { margin-bottom: 32px; }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .section-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    letter-spacing: 3px;
+    color: var(--accent);
+  }
+
+  .teams-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 12px;
+  }
+
+  .team-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+  }
+
+  .team-card:hover { border-color: var(--accent); background: var(--surface2); }
+  .team-card.active { border-color: var(--accent); background: var(--surface2); }
+  .team-card.active::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 10px 10px 0 0;
+  }
+
+  .team-name {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .team-meta { font-size: 12px; color: var(--muted); }
+
+  .team-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .btn-small {
+    flex: 1;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 6px 10px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-small.primary { background: rgba(0,212,255,0.15); color: var(--accent); border: 1px solid rgba(0,212,255,0.3); }
+  .btn-small.primary:hover { background: rgba(0,212,255,0.25); }
+  .btn-small.danger { background: rgba(255,71,87,0.1); color: var(--error); border: 1px solid rgba(255,71,87,0.3); }
+  .btn-small.danger:hover { background: rgba(255,71,87,0.2); }
+
+  .add-team-card {
+    background: transparent;
+    border: 1px dashed var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: var(--muted);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    min-height: 80px;
+  }
+
+  .add-team-card:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ── UPLOAD ── */
+  .upload-section { margin-bottom: 32px; }
+
+  .drop-zone {
+    border: 2px dashed var(--border);
+    border-radius: 12px;
+    padding: 40px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    background: var(--surface);
+    position: relative;
+  }
+
+  .drop-zone:hover, .drop-zone.over { border-color: var(--accent); background: var(--surface2); }
+  .drop-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+  .drop-zone .icon { font-size: 36px; margin-bottom: 10px; display: block; }
+  .drop-zone h3 { font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 700; letter-spacing: 1px; margin-bottom: 4px; }
+  .drop-zone p { color: var(--muted); font-size: 13px; }
+
+  /* ── PLAYERS ── */
+  #players-section { display: none; margin-bottom: 32px; }
+
+  .players-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .player-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.2s;
+  }
+
+  .player-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    transform: scaleX(0); transform-origin: left; transition: transform 0.3s;
+  }
+
+  .player-card.done::before { transform: scaleX(1); background: linear-gradient(90deg, var(--success), #00b050); }
+  .player-card.processing::before { transform: scaleX(1); animation: shimmer 1.5s infinite; }
+
+  @keyframes shimmer {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .card-top { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+
+  .player-thumb {
+    width: 44px; height: 44px; border-radius: 6px;
+    object-fit: cover; border: 1px solid var(--border);
+    background: var(--bg); display: flex; align-items: center;
+    justify-content: center; font-size: 18px; flex-shrink: 0; overflow: hidden;
+  }
+
+  .player-thumb img { width: 100%; height: 100%; object-fit: cover; }
+
+  .player-info h4 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 16px; font-weight: 700; margin-bottom: 2px;
+  }
+
+  .player-num { font-family: 'Bebas Neue', sans-serif; font-size: 13px; color: var(--accent2); }
+  .player-pos { font-size: 10px; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+
+  .char-list { display: flex; flex-wrap: wrap; gap: 3px; margin-bottom: 8px; }
+
+  .char-tag {
+    background: rgba(0,212,255,0.07); border: 1px solid rgba(0,212,255,0.15);
+    color: var(--text); font-size: 10px; padding: 2px 6px; border-radius: 3px; font-weight: 600;
+  }
+
+  .stats-row { display: grid; grid-template-columns: repeat(5,1fr); gap: 3px; }
+
+  .stat-box { text-align: center; background: var(--bg); border-radius: 3px; padding: 4px 2px; }
+  .stat-val { font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700; display: block; }
+  .stat-lbl { font-size: 8px; color: var(--muted); text-transform: uppercase; }
+
+  .card-status {
+    margin-top: 8px; font-size: 11px; text-align: center;
+    padding: 5px 8px; border-radius: 4px; font-weight: 600;
+  }
+
+  .card-status.idle { background: rgba(90,96,128,0.1); color: var(--muted); }
+  .card-status.uploading { background: rgba(255,107,0,0.1); color: var(--accent2); animation: shimmer 1.2s infinite; }
+  .card-status.editing { background: rgba(0,212,255,0.1); color: var(--accent); animation: shimmer 1.2s infinite; }
+  .card-status.exporting { background: rgba(255,200,0,0.1); color: #ffc800; animation: shimmer 1.2s infinite; }
+  .card-status.done { background: rgba(0,230,118,0.1); color: var(--success); }
+  .card-status.error { background: rgba(255,71,87,0.1); color: var(--error); font-size: 10px; }
+
+  /* ── ACTION BAR ── */
+  .action-bar {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+
+  .action-info h3 { font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 700; margin-bottom: 3px; }
+  .action-info p { font-size: 13px; color: var(--muted); }
+  .btn-group { display: flex; gap: 10px; flex-wrap: wrap; }
+
+  .btn {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 14px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+    padding: 12px 24px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s;
+  }
+
+  .btn-primary { background: linear-gradient(135deg, var(--accent), #0099bb); color: #08091a; }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,212,255,0.3); }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+  .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--muted); }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ── PROGRESS ── */
+  .progress-wrap {
+    display: none;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 16px;
+  }
+
+  .progress-top { display: flex; justify-content: space-between; margin-bottom: 10px; }
+  .progress-label { font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 700; letter-spacing: 1px; color: var(--accent); }
+  .progress-num { font-size: 13px; color: var(--muted); }
+  .progress-bg { background: var(--bg); border-radius: 4px; height: 6px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 4px; width: 0%; transition: width 0.4s; }
+  .progress-step { font-size: 12px; color: var(--muted); margin-top: 8px; min-height: 16px; }
+
+  /* ── RESULTS ── */
+  .results-wrap {
+    display: none;
+    background: var(--surface);
+    border: 1px solid rgba(0,230,118,0.2);
+    border-radius: 12px;
+    padding: 24px;
+  }
+
+  .results-title { font-family: 'Bebas Neue', sans-serif; font-size: 24px; letter-spacing: 2px; color: var(--success); margin-bottom: 4px; }
+  .results-sub { font-size: 13px; color: var(--muted); margin-bottom: 16px; }
+
+  .result-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--bg);
+    border-radius: 6px;
+    padding: 10px 16px;
+    margin-bottom: 8px;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .result-left { display: flex; align-items: center; gap: 10px; }
+
+  .result-thumb {
+    width: 80px; height: 45px; border-radius: 4px;
+    object-fit: cover; border: 1px solid var(--border);
+    background: var(--surface);
+  }
+
+  .result-name { font-weight: 600; font-size: 14px; }
+  .result-sub2 { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  .result-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  .result-link {
+    color: var(--accent); text-decoration: none;
+    font-size: 11px; font-weight: 700;
+    border: 1px solid rgba(0,212,255,0.3);
+    padding: 5px 12px; border-radius: 4px;
+    font-family: 'Barlow Condensed', sans-serif;
+    letter-spacing: 1px; text-transform: uppercase;
+    transition: all 0.2s;
+    display: inline-flex; align-items: center; gap: 5px;
+  }
+
+  .result-link:hover { background: rgba(0,212,255,0.1); }
+  .result-link.canva { color: #8b5cf6; border-color: rgba(139,92,246,0.3); }
+  .result-link.canva:hover { background: rgba(139,92,246,0.1); }
+  .result-error { color: var(--error); font-size: 12px; }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    display: none;
+    position: fixed; inset: 0; z-index: 100;
+    background: rgba(8,9,26,0.9);
+    align-items: center; justify-content: center;
+    padding: 24px;
+  }
+
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 28px;
+    max-width: 500px;
+    width: 100%;
+  }
+
+  .modal h3 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 24px; letter-spacing: 2px; margin-bottom: 16px;
+  }
+
+  .modal-field { margin-bottom: 14px; }
+  .modal-field label { display: block; font-size: 11px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+
+  .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+
+  /* ── INFO BOX ── */
+  .info-box {
+    background: rgba(0,212,255,0.04);
+    border: 1px solid rgba(0,212,255,0.15);
+    border-radius: 8px;
+    padding: 14px 16px;
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.6;
+    margin-bottom: 24px;
+  }
+
+  .info-box strong { color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header>
+    <div class="logo-area">
+      <h1>GENERADOR<br>DE CARÁTULAS</h1>
+      <p>Automatización Excel → Canva → PNG</p>
+    </div>
+    <div class="header-badge">🏀 Basketball Analytics</div>
+  </header>
+
+  <!-- CONFIG -->
+  <div class="config-grid">
+    <div class="config-card">
+      <label>🔑 Canva Access Token</label>
+      <input type="password" class="input" id="canva-token" placeholder="Pegá tu Canva token..." />
+      <div class="saved-badge" id="token-saved" style="display:none">✓ Guardado localmente</div>
+      <div class="hint">
+        Conseguilo en <a href="https://www.canva.com/developers/apps" target="_blank">Canva Developers</a> →
+        Tu app → OAuth → Access Token
+      </div>
+    </div>
+    <div class="config-card">
+      <label>📐 ID Plantilla Canva (base)</label>
+      <input type="text" class="input" id="template-id" value="DAHEUZ5rAek" />
+      <div class="saved-badge" style="display:block; color: var(--success)">✓ Plantilla lista</div>
+      <div class="hint">ID de tu plantilla base en Canva</div>
+    </div>
+  </div>
+
+  <div class="info-box">
+    📋 <strong>Flujo de trabajo:</strong> Cada equipo tiene su propia plantilla y sus jugadores. Subís el Excel por equipo, generás las carátulas con un clic y descargás los PNGs directamente desde acá — sin links que expiren.
+  </div>
+
+  <!-- TEAMS -->
+  <div class="teams-section">
+    <div class="section-header">
+      <div class="section-title">MIS EQUIPOS</div>
+    </div>
+    <div class="teams-grid" id="teams-grid">
+      <div class="add-team-card" onclick="openAddTeam()">
+        <span style="font-size:20px">+</span> NUEVO EQUIPO
+      </div>
+    </div>
+  </div>
+
+  <!-- UPLOAD -->
+  <div class="upload-section" id="upload-section" style="display:none">
+    <div class="section-header">
+      <div class="section-title" id="upload-title">SUBIR EXCEL</div>
+      <div style="font-size:13px;color:var(--muted)" id="upload-subtitle"></div>
+    </div>
+    <div class="drop-zone" id="drop-zone">
+      <input type="file" id="file-input" accept=".xlsx,.xls" />
+      <span class="icon">📊</span>
+      <h3>SUBÍ EL EXCEL</h3>
+      <p>Arrastrá el archivo o hacé clic · .xlsx / .xls</p>
+    </div>
+  </div>
+
+  <!-- PLAYERS -->
+  <div id="players-section">
+    <div class="section-header">
+      <div class="section-title">JUGADORES</div>
+      <div class="tag" id="count-tag" style="background:var(--surface2);border:1px solid var(--border);color:var(--muted);font-size:12px;padding:4px 12px;border-radius:20px;">0 jugadores</div>
+    </div>
+
+    <div class="players-grid" id="players-grid"></div>
+
+    <div class="action-bar">
+      <div class="action-info">
+        <h3>¿Todo listo?</h3>
+        <p>Se generará y descargará un PNG por cada jugador</p>
+      </div>
+      <div class="btn-group">
+        <button class="btn btn-ghost" onclick="resetUpload()">Cambiar Excel</button>
+        <button class="btn btn-primary" id="gen-btn" onclick="generateAll()">⚡ GENERAR TODO</button>
+      </div>
+    </div>
+
+    <div class="progress-wrap" id="progress-wrap">
+      <div class="progress-top">
+        <span class="progress-label">PROCESANDO...</span>
+        <span class="progress-num" id="progress-num">0 / 0</span>
+      </div>
+      <div class="progress-bg"><div class="progress-fill" id="progress-fill"></div></div>
+      <div class="progress-step" id="progress-step"></div>
+    </div>
+
+    <div class="results-wrap" id="results-wrap">
+      <div class="results-title">✅ CARÁTULAS LISTAS</div>
+      <div class="results-sub">Descargalas haciendo clic en cada botón</div>
+      <div id="results-list"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ADD TEAM MODAL -->
+<div class="modal-overlay" id="team-modal">
+  <div class="modal">
+    <h3>NUEVO EQUIPO</h3>
+    <div class="modal-field">
+      <label>Nombre del equipo</label>
+      <input type="text" class="input" id="team-name-input" placeholder="Ej: Brasil U18" />
+    </div>
+    <div class="modal-field">
+      <label>ID Plantilla Canva (opcional, si es diferente a la base)</label>
+      <input type="text" class="input" id="team-template-input" placeholder="Dejar vacío para usar la plantilla base" />
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" onclick="saveTeam()">GUARDAR</button>
+      <button class="btn btn-ghost" onclick="closeModal()">CANCELAR</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── STATE ──────────────────────────────────────────────────────────────────
+let teams = JSON.parse(localStorage.getItem('teams') || '[]');
+let activeTeam = null;
+let players = [];
+
+// Load saved config
+const savedToken = localStorage.getItem('canva_token') || '';
+const savedTemplate = localStorage.getItem('template_id') || 'DAHEUZ5rAek';
+document.getElementById('canva-token').value = savedToken;
+document.getElementById('template-id').value = savedTemplate;
+if (savedToken) document.getElementById('token-saved').style.display = 'block';
+
+document.getElementById('canva-token').addEventListener('change', () => {
+  const v = document.getElementById('canva-token').value.trim();
+  localStorage.setItem('canva_token', v);
+  document.getElementById('token-saved').style.display = v ? 'block' : 'none';
+});
+document.getElementById('template-id').addEventListener('change', () => {
+  localStorage.setItem('template_id', document.getElementById('template-id').value.trim());
+});
+
+// ── TEAMS ──────────────────────────────────────────────────────────────────
+function renderTeams() {
+  const grid = document.getElementById('teams-grid');
+  const addBtn = `<div class="add-team-card" onclick="openAddTeam()"><span style="font-size:20px">+</span> NUEVO EQUIPO</div>`;
+
+  if (!teams.length) {
+    grid.innerHTML = addBtn;
+    return;
+  }
+
+  grid.innerHTML = teams.map((t, i) => `
+    <div class="team-card ${activeTeam?.id === t.id ? 'active' : ''}" onclick="selectTeam(${i})">
+      <div class="team-name">🏀 ${t.name}</div>
+      <div class="team-meta">${t.players || 0} jugadores · ${t.templateId || 'Plantilla base'}</div>
+      <div class="team-actions">
+        <button class="btn-small primary" onclick="event.stopPropagation(); selectTeam(${i})">CARGAR EXCEL</button>
+        <button class="btn-small danger" onclick="event.stopPropagation(); deleteTeam(${i})">✕</button>
+      </div>
+    </div>
+  `).join('') + addBtn;
+}
+
+function selectTeam(idx) {
+  activeTeam = teams[idx];
+  document.querySelectorAll('.team-card').forEach((c, i) => {
+    c.classList.toggle('active', i === idx);
+  });
+  document.getElementById('upload-section').style.display = 'block';
+  document.getElementById('upload-title').textContent = `EXCEL — ${activeTeam.name.toUpperCase()}`;
+  document.getElementById('players-section').style.display = 'none';
+  document.getElementById('upload-subtitle').textContent = `Plantilla: ${activeTeam.templateId || document.getElementById('template-id').value}`;
+  document.getElementById('results-wrap').style.display = 'none';
+  document.getElementById('progress-wrap').style.display = 'none';
+  players = [];
+}
+
+function deleteTeam(idx) {
+  if (!confirm(`¿Eliminar el equipo "${teams[idx].name}"?`)) return;
+  teams.splice(idx, 1);
+  localStorage.setItem('teams', JSON.stringify(teams));
+  if (activeTeam && !teams.find(t => t.id === activeTeam.id)) {
+    activeTeam = null;
+    document.getElementById('upload-section').style.display = 'none';
+    document.getElementById('players-section').style.display = 'none';
+  }
+  renderTeams();
+}
+
+function openAddTeam() {
+  document.getElementById('team-name-input').value = '';
+  document.getElementById('team-template-input').value = '';
+  document.getElementById('team-modal').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('team-modal').classList.remove('open');
+}
+
+function saveTeam() {
+  const name = document.getElementById('team-name-input').value.trim();
+  if (!name) { alert('Ingresá un nombre para el equipo'); return; }
+  const templateId = document.getElementById('team-template-input').value.trim();
+  const team = { id: Date.now().toString(), name, templateId, players: 0 };
+  teams.push(team);
+  localStorage.setItem('teams', JSON.stringify(teams));
+  closeModal();
+  renderTeams();
+  selectTeam(teams.length - 1);
+}
+
+// ── FILE UPLOAD ────────────────────────────────────────────────────────────
+const dz = document.getElementById('drop-zone');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('over'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('over'));
+dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('over'); if(e.dataTransfer.files[0]) processFile(e.dataTransfer.files[0]); });
+document.getElementById('file-input').addEventListener('change', e => { if(e.target.files[0]) processFile(e.target.files[0]); });
+
+function processFile(file) {
+  const r = new FileReader();
+  r.onload = e => {
+    const wb = XLSX.read(e.target.result, { type: 'array' });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    parsePlayers(XLSX.utils.sheet_to_json(ws, { header: 1, defval: null }));
+  };
+  r.readAsArrayBuffer(file);
+}
+
+function parsePlayers(rows) {
+  let hr = -1;
+  for (let i = 0; i < rows.length; i++) {
+    if (rows[i] && rows[i].includes('NOMBRE DEL JUGADOR')) { hr = i; break; }
+  }
+  if (hr === -1) { alert('No encontré la estructura esperada en el Excel.'); return; }
+
+  const h = rows[hr];
+  const iF  = h.indexOf('FOTO');
+  const iN  = h.indexOf('NOMBRE DEL JUGADOR');
+  const iNu = h.indexOf('N°');
+  const iP  = h.indexOf('PUESTO');
+  const iC  = h.indexOf('CARARACTERISTICAS INDIVIDUALES');
+  const iPt = h.findIndex(x => x && x.toString().trim() === 'PTS');
+  const i3  = h.indexOf('3PTS');
+  const iA  = h.findIndex(x => x && x.toString().trim() === 'ASIS');
+  const iR  = h.indexOf('REB OF');
+  const iT  = h.indexOf('TL');
+
+  players = [];
+  let cur = null;
+
+  for (let i = hr + 1; i < rows.length; i++) {
+    const r = rows[i];
+    if (!r) continue;
+    if (r[0] !== null && r[0] !== undefined) {
+      if (cur) players.push(cur);
+      cur = {
+        foto:   r[iF]  || '',
+        nombre: r[iN]  || '',
+        numero: r[iNu] || r[0] || '',
+        puesto: r[iP]  || '',
+        caracteristicas: [],
+        pts:  r[iPt] ?? '-', tres: r[i3] ?? '-',
+        asis: r[iA]  ?? '-', reb:  r[iR] ?? '-', tl: r[iT] ?? '-',
+      };
+      const c = r[iC];
+      if (c && c !== '*') cur.caracteristicas.push(c.toString().replace(/^\*+/, '').trim());
+    } else if (cur) {
+      const c = r[iC];
+      if (c && c !== '*' && c.toString().trim()) cur.caracteristicas.push(c.toString().replace(/^\*+/, '').trim());
+    }
+  }
+  if (cur) players.push(cur);
+  players = players.filter(p => p.nombre || p.numero);
+
+  // Update team player count
+  if (activeTeam) {
+    const idx = teams.findIndex(t => t.id === activeTeam.id);
+    if (idx !== -1) {
+      teams[idx].players = players.length;
+      localStorage.setItem('teams', JSON.stringify(teams));
+      renderTeams();
+    }
+  }
+
+  renderPlayers();
+}
+
+function renderPlayers() {
+  const grid = document.getElementById('players-grid');
+  grid.innerHTML = '';
+  document.getElementById('count-tag').textContent = `${players.length} jugador${players.length !== 1 ? 'es' : ''}`;
+
+  players.forEach((p, i) => {
+    const hasPhoto = p.foto && p.foto.toString().startsWith('http');
+    const el = document.createElement('div');
+    el.className = 'player-card';
+    el.id = `pc-${i}`;
+    el.innerHTML = `
+      <div class="card-top">
+        <div class="player-thumb">
+          ${hasPhoto ? `<img src="${p.foto}" onerror="this.parentElement.innerHTML='📷'" />` : '📷'}
+        </div>
+        <div class="player-info">
+          <h4>${p.nombre || 'Sin nombre'}</h4>
+          <div class="player-num">#${p.numero || '?'}</div>
+          <div class="player-pos">${p.puesto || 'Sin puesto'}</div>
+        </div>
+      </div>
+      <div class="char-list">
+        ${p.caracteristicas.length
+          ? p.caracteristicas.map(c => `<span class="char-tag">${c}</span>`).join('')
+          : `<span style="color:var(--muted);font-size:11px">Sin características</span>`}
+      </div>
+      <div class="stats-row">
+        ${[['PTS',p.pts],['3PTS',p.tres],['ASIS',p.asis],['REB',p.reb],['TL',p.tl]]
+          .map(([l,v]) => `<div class="stat-box"><span class="stat-val">${v}</span><span class="stat-lbl">${l}</span></div>`).join('')}
+      </div>
+      <div class="card-status idle" id="st-${i}">⏳ Pendiente</div>
+    `;
+    grid.appendChild(el);
+  });
+
+  document.getElementById('upload-section').style.display = 'none';
+  document.getElementById('players-section').style.display = 'block';
+}
+
+// ── GENERATION ─────────────────────────────────────────────────────────────
+async function generateAll() {
+  const canvaToken = document.getElementById('canva-token').value.trim();
+  const templateId = (activeTeam?.templateId || document.getElementById('template-id').value).trim();
+
+  if (!canvaToken) { alert('⚠️ Ingresá tu Canva Access Token.'); return; }
+  if (!templateId) { alert('⚠️ Ingresá el ID de la plantilla Canva.'); return; }
+  if (!players.length) return;
+
+  const btn = document.getElementById('gen-btn');
+  btn.disabled = true;
+  btn.textContent = '⏳ PROCESANDO...';
+  document.getElementById('progress-wrap').style.display = 'block';
+  document.getElementById('results-wrap').style.display = 'none';
+
+  const results = [];
+
+  for (let i = 0; i < players.length; i++) {
+    const p = players[i];
+
+    try {
+      // Step 1: Upload photo
+      let assetId = null;
+      if (p.foto && p.foto.toString().startsWith('http')) {
+        setStatus(i, 'uploading', '📸 Subiendo foto...');
+        setProgress(i, players.length, `Subiendo foto de ${p.nombre}`);
+        assetId = await uploadPhoto(p.foto, p.nombre, canvaToken);
+      }
+
+      // Step 2: Edit design
+      setStatus(i, 'editing', '✏️ Editando carátula...');
+      setProgress(i, players.length, `Editando carátula de ${p.nombre}`);
+      await editDesign(templateId, p, assetId, canvaToken);
+
+      // Step 3: Export PNG (via our backend proxy)
+      setStatus(i, 'exporting', '📥 Exportando PNG...');
+      setProgress(i, players.length, `Exportando PNG de ${p.nombre}`);
+      const pngUrl = await exportPNG(templateId, canvaToken);
+
+      setStatus(i, 'done', '✅ PNG listo');
+      document.getElementById(`pc-${i}`).classList.add('done');
+      results.push({ nombre: p.nombre, numero: p.numero, puesto: p.puesto, pngUrl, designUrl: `https://www.canva.com/design/${templateId}/edit` });
+
+    } catch(err) {
+      setStatus(i, 'error', `❌ ${err.message}`);
+      results.push({ nombre: p.nombre, numero: p.numero, puesto: p.puesto, pngUrl: null, error: err.message });
+    }
+  }
+
+  setProgress(players.length, players.length, '¡Completado!');
+  showResults(results);
+  btn.textContent = '✅ COMPLETADO';
+}
+
+async function uploadPhoto(url, name, token) {
+  const res = await fetch('/api/upload-photo', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ photoUrl: url, playerName: name, canvaToken: token }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Error subiendo foto');
+  return data.asset_id;
+}
+
+async function editDesign(designId, player, assetId, token) {
+  const res = await fetch('/api/edit-design', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ designId, player, assetId, canvaToken: token }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Error editando diseño');
+  return data;
+}
+
+async function exportPNG(designId, token) {
+  const res = await fetch('/api/export-png', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ designId, canvaToken: token }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Error exportando PNG');
+
+  // Proxy the URL through our server so it never expires
+  return `/api/proxy-png?url=${encodeURIComponent(data.url)}`;
+}
+
+// ── UI HELPERS ──────────────────────────────────────────────────────────────
+function setStatus(i, cls, txt) {
+  const el = document.getElementById(`st-${i}`);
+  el.className = `card-status ${cls}`;
+  el.textContent = txt;
+}
+
+function setProgress(done, total, step) {
+  document.getElementById('progress-fill').style.width = `${(done/total)*100}%`;
+  document.getElementById('progress-num').textContent = `${done} / ${total}`;
+  if (step) document.getElementById('progress-step').textContent = step;
+}
+
+function showResults(results) {
+  const list = document.getElementById('results-list');
+  list.innerHTML = results.map(r => `
+    <div class="result-item">
+      <div class="result-left">
+        ${r.pngUrl ? `<img class="result-thumb" src="${r.pngUrl}" onerror="this.style.display='none'" />` : ''}
+        <div>
+          <div class="result-name">🏀 ${r.nombre}</div>
+          <div class="result-sub2">#${r.numero || '?'} · ${r.puesto || '-'}</div>
+        </div>
+      </div>
+      <div class="result-btns">
+        ${r.pngUrl
+          ? `<a href="${r.pngUrl}" download="${r.nombre}.png" class="result-link">⬇ PNG</a>
+             <a href="${r.designUrl}" target="_blank" class="result-link canva">🎨 CANVA</a>`
+          : `<span class="result-error">❌ ${r.error}</span>`}
+      </div>
+    </div>
+  `).join('');
+  document.getElementById('results-wrap').style.display = 'block';
+}
+
+function resetUpload() {
+  players = [];
+  document.getElementById('players-section').style.display = 'none';
+  document.getElementById('upload-section').style.display = 'block';
+  document.getElementById('progress-wrap').style.display = 'none';
+  document.getElementById('results-wrap').style.display = 'none';
+  const btn = document.getElementById('gen-btn');
+  btn.disabled = false;
+  btn.textContent = '⚡ GENERAR TODO';
+  document.getElementById('file-input').value = '';
+}
+
+// Init
+renderTeams();
+</script>
+</body>
+</html>
